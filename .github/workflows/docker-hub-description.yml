@@ -34,5 +34,5 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/zshmazon
-          short-description: "Your Ultimate AmazonLinux2023 Image with Zsh Magic!"
+          short-description: "Your Ultimate AmazonLinux Image with Zsh Magic!"
           readme-filepath: "./zshmazon/docs/README.md"
