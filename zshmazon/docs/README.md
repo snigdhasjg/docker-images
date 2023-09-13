@@ -8,7 +8,7 @@ Whether you're a developer, system administrator, or terminal enthusiast, ZSHmaz
 
 ## Key Features:
 
-- AmazonLinux base with [Zsh](https://en.wikipedia.org/wiki/Z_shell) magic.
+- [AmazonLinux](https://hub.docker.com/_/amazonlinux) base with [Zsh](https://en.wikipedia.org/wiki/Z_shell) magic.
 - [Oh-My-Zsh](https://ohmyz.sh) for enhanced shell capabilities.
 - [Powerlevel10k](https://github.com/romkatv/powerlevel10k) for eye-catching, customizable prompts.
 - [Syntax highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) for code clarity.
