@@ -42,5 +42,8 @@ docker volume rm zshbuntu-sandbox
 ## Contribute
 On [GitHub](https://github.com/snigdhasjg/docker-images/tree/main/zshbuntu) by editing the [Dockerfile](https://github.com/snigdhasjg/docker-images/tree/main/zshbuntu/Dockerfile)
 
+[![Docker Hub Description](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-hub-description.yml/badge.svg)](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-hub-description.yml)
+[![Docker Image Build](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-image-build.yml/badge.svg)](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-image-build.yml)
+
 ---
 Tags: #Ubuntu #Zsh #OhMyZsh #Powerlevel10k #SyntaxHighlighting #AutoSuggestions #DockerImage #CommandLine #DeveloperTools #Productivity

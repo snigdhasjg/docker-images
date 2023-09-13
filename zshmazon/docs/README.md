@@ -42,5 +42,8 @@ docker volume rm zshmazon-sandbox
 ## Contribute
 On [GitHub](https://github.com/snigdhasjg/docker-images/tree/main/zshmazon) by editing the [Dockerfile](https://github.com/snigdhasjg/docker-images/tree/main/zshmazon/Dockerfile)
 
+[![Docker Hub Description](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-hub-description.yml/badge.svg)](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-hub-description.yml)
+[![Docker Image Build](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-image-build.yml/badge.svg)](https://github.com/snigdhasjg/docker-images/actions/workflows/docker-image-build.yml)
+
 ---
 Tags: #AmazonLinux #Zsh #OhMyZsh #Powerlevel10k #SyntaxHighlighting #AutoSuggestions #DockerImage #CommandLine #DeveloperTools #Productivity
