@@ -40,7 +40,7 @@ docker volume rm zshbuntu-sandbox
 - This volume was storing your configuration and setups of docker image's home directory.
 
 ## Contribute
-On [GitHub](https://github.com/snigdhasjg/docker-images/tree/main/zshbuntu) by editing the [Dockerfile](https://github.com/snigdhasjg/docker-images/tree/main/zshbuntuDockerfile)
+On [GitHub](https://github.com/snigdhasjg/docker-images/tree/main/zshbuntu) by editing the [Dockerfile](https://github.com/snigdhasjg/docker-images/tree/main/zshbuntu/Dockerfile)
 
 ---
 Tags: #Ubuntu #Zsh #OhMyZsh #Powerlevel10k #SyntaxHighlighting #AutoSuggestions #DockerImage #CommandLine #DeveloperTools #Productivity
