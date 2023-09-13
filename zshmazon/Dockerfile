@@ -1,11 +1,11 @@
-ARG UBUNTU_VERSION=23.04
-FROM ubuntu:${UBUNTU_VERSION}
+ARG AMAZON_LINUX_VERSION=2023
+FROM amazonlinux:${AMAZON_LINUX_VERSION}
 
-RUN apt update
-RUN apt install -y zsh sudo systemd vim iputils-ping curl && \
+RUN yum update
+RUN yum install -y zsh sudo vim iputils tar && \
     # apt install -y python3 pip && \
-    apt install -y git tig && \
-    apt clean
+    yum install -y git tig && \
+    yum clean all
 
 # Creating user
 RUN useradd -rm -d /home/sandbox -s /usr/bin/zsh -g root -G root -u 1001 sandbox && \

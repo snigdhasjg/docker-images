@@ -19,11 +19,20 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Docker Hub Description
+      - name: Docker Hub Description ZSHbuntu
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: macabrequinox/zshbuntu
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/zshbuntu
           short-description: "Your Ultimate Ubuntu Image with Zsh Magic!"
           readme-filepath: "./zshbuntu/docs/README.md"
+
+      - name: Docker Hub Description ZSHmazon
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/zshmazon
+          short-description: "Your Ultimate AmazonLinux2023 Image with Zsh Magic!"
+          readme-filepath: "./zshmazon/docs/README.md"

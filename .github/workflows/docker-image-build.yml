@@ -42,7 +42,7 @@ jobs:
           echo "git_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
 
       - id: zshbuntu
-        name: Build zshbuntu
+        name: Build ZSHbuntu
         uses: docker/build-push-action@v5
         with:
           context: zshbuntu/
@@ -57,14 +57,41 @@ jobs:
             org.opencontainers.image.created=${{ steps.metadata.outputs.current_date }}
             org.opencontainers.image.revision=${{ github.sha }}
 
+      - id: zshmazon
+        name: Build ZSHmazon
+        uses: docker/build-push-action@v5
+        with:
+          context: zshmazon/
+          no-cache: true
+          push: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/zshmazon:latest,${{ vars.DOCKERHUB_USERNAME }}/zshmazon:${{ steps.metadata.outputs.git_tag }}
+          platforms: linux/amd64,linux/arm64/v8
+          labels: |
+            org.opencontainers.image.title=zshmazon
+            org.opencontainers.image.url=${{ github.repositoryUrl }}
+            org.opencontainers.image.version=${{ steps.metadata.outputs.git_tag }}
+            org.opencontainers.image.created=${{ steps.metadata.outputs.current_date }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
       - name: Summary
         run: |
           {
-            echo -e "Image: ${{ fromJson(steps.zshbuntu.outputs.metadata)['image.name'] }}\n"
+            echo -e "# Image: ${{ fromJson(steps.zshbuntu.outputs.metadata)['image.name'] }}\n"
             echo '<details>'
             echo '<summary>Details</summary>'
             echo -e '\n```'
             echo -e "${{ steps.zshbuntu.outputs.metadata }}"
+            echo -e '```'
+            echo '</details>'
+            echo -e '\n'
+          } >> $GITHUB_STEP_SUMMARY
+          
+          {
+            echo -e "# Image: ${{ fromJson(steps.zshmazon.outputs.metadata)['image.name'] }}\n"
+            echo '<details>'
+            echo '<summary>Details</summary>'
+            echo -e '\n```'
+            echo -e "${{ steps.zshmazon.outputs.metadata }}"
             echo -e '```'
             echo '</details>'
             echo -e '\n'
