@@ -60,9 +60,9 @@ jobs:
       - name: Summary
         run: |
           {
-            echo -e "Image: zshbuntu:${{ steps.metadata.outputs.git_tag }}\n"
+            echo -e "Image: ${{ fromJson(steps.zshbuntu.outputs.metadata)['image.name'] }}\n"
             echo '<details>'
-            echo '<summary>Metadata</summary>'
+            echo '<summary>Details</summary>'
             echo -e '\n```'
             echo -e "${{ steps.zshbuntu.outputs.metadata }}"
             echo -e '```'
