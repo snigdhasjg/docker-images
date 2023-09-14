@@ -19,14 +19,24 @@ jobs:
         with:
           fetch-depth: 1
 
+      - id: zshbuntu_read_files
+        name: Read files
+        run: |
+          echo "short_description=$(cat ./zshbuntu/docs/short_description.txt)" >> $GITHUB_OUTPUT
+
       - name: Docker Hub Description ZSHbuntu
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/zshbuntu
-          short-description: "Your Ultimate Ubuntu Image with Zsh Magic!"
+          short-description: ${{ steps.zshbuntu_read_files.outputs.short_description }}
           readme-filepath: "./zshbuntu/docs/README.md"
+
+      - id: zshmazon_read_files
+        name: Read files
+        run: |
+          echo "short_description=$(cat ./zshmazon/docs/short_description.txt)" >> $GITHUB_OUTPUT
 
       - name: Docker Hub Description ZSHmazon
         uses: peter-evans/dockerhub-description@v3
@@ -34,5 +44,5 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/zshmazon
-          short-description: "Your Ultimate AmazonLinux Image with Zsh Magic!"
+          short-description: ${{ steps.zshmazon_read_files.outputs.short_description }}
           readme-filepath: "./zshmazon/docs/README.md"
