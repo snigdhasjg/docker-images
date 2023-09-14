@@ -10,39 +10,47 @@ on:
       - ".github/workflows/docker-hub-description.yml"
 
 jobs:
-  docker-hub:
+  prepare-folders:
     runs-on: ubuntu-latest
-    name: Docker Hub Update
+    name: Prepare folders
+    outputs:
+      directories: ${{ steps.list_folders.outputs.directories }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
-      - id: zshbuntu_read_files
+      - id: list_folders
+        name: List folders
+        run: |
+          directory_quoted_and_comma=$(find . -type f \( -name Dockerfile -o -path 'docs/README.md' -o -path 'docs/short_description.txt' \) -exec dirname {} \; | sort -u | awk 'BEGIN { ORS = "," } { gsub(/^\.\//, ""); print "\"" $0 "\"" }' | sed 's/,$//' )
+          echo "directories=[${directory_quoted_and_comma}]" >> "$GITHUB_OUTPUT"
+          echo "::notice title=directories::[${directory_quoted_and_comma}]"
+
+  docker-hub:
+    needs: prepare-folders
+    runs-on: ubuntu-latest
+    name: Docker Hub Update
+    strategy:
+      matrix:
+        directories: ${{ fromJSON(needs.prepare-folders.outputs.directories) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - id: read_files
         name: Read files
         run: |
-          echo "short_description=$(cat ./zshbuntu/docs/short_description.txt)" >> $GITHUB_OUTPUT
+          echo "short_description=$(cat ./${{ matrix.directories }}/docs/short_description.txt)" >> $GITHUB_OUTPUT
 
-      - name: Docker Hub Description ZSHbuntu
+      - name: Description Update ${{ matrix.directories }}
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ vars.DOCKERHUB_USERNAME }}/zshbuntu
-          short-description: ${{ steps.zshbuntu_read_files.outputs.short_description }}
-          readme-filepath: "./zshbuntu/docs/README.md"
-
-      - id: zshmazon_read_files
-        name: Read files
-        run: |
-          echo "short_description=$(cat ./zshmazon/docs/short_description.txt)" >> $GITHUB_OUTPUT
-
-      - name: Docker Hub Description ZSHmazon
-        uses: peter-evans/dockerhub-description@v3
-        with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ vars.DOCKERHUB_USERNAME }}/zshmazon
-          short-description: ${{ steps.zshmazon_read_files.outputs.short_description }}
-          readme-filepath: "./zshmazon/docs/README.md"
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ matrix.directories }}
+          short-description: ${{ steps.read_files.outputs.short_description }}
+          readme-filepath: "./${{ matrix.directories }}/docs/README.md"
