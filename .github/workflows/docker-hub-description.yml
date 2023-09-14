@@ -9,8 +9,11 @@ on:
       - "**/docs/**"
       - ".github/workflows/docker-hub-description.yml"
 
+concurrency: docker_hub_description_${{ github.ref }}
+
 jobs:
   prepare-folders:
+    name: Prepare Folders
     uses: ./.github/workflows/prepare-folders.yml
 
   docker-hub:

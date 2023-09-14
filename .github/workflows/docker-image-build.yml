@@ -14,9 +14,17 @@ on:
 concurrency: docker_image_build_${{ github.ref }}
 
 jobs:
+  prepare-folders:
+    name: Prepare Folders
+    uses: ./.github/workflows/prepare-folders.yml
+
   docker:
+    needs: prepare-folders
     runs-on: ubuntu-latest
     name: Docker Build and Push
+    strategy:
+      matrix:
+        directories: ${{ fromJSON(needs.prepare-folders.outputs.directories) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -41,33 +49,17 @@ jobs:
           echo "current_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
           echo "git_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
 
-      - id: zshbuntu
-        name: Build ZSHbuntu
+      - id: docker_image
+        name: Build ${{ matrix.directories }}
         uses: docker/build-push-action@v5
         with:
-          context: zshbuntu/
+          context: "${{ matrix.directories }}/"
           no-cache: true
           push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/zshbuntu:latest,${{ vars.DOCKERHUB_USERNAME }}/zshbuntu:${{ steps.metadata.outputs.git_tag }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ matrix.directories }}:latest,${{ vars.DOCKERHUB_USERNAME }}/${{ matrix.directories }}:${{ steps.metadata.outputs.git_tag }}
           platforms: linux/amd64,linux/arm64/v8
           labels: |
-            org.opencontainers.image.title=zshbuntu
-            org.opencontainers.image.url=${{ github.repositoryUrl }}
-            org.opencontainers.image.version=${{ steps.metadata.outputs.git_tag }}
-            org.opencontainers.image.created=${{ steps.metadata.outputs.current_date }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
-      - id: zshmazon
-        name: Build ZSHmazon
-        uses: docker/build-push-action@v5
-        with:
-          context: zshmazon/
-          no-cache: true
-          push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/zshmazon:latest,${{ vars.DOCKERHUB_USERNAME }}/zshmazon:${{ steps.metadata.outputs.git_tag }}
-          platforms: linux/amd64,linux/arm64/v8
-          labels: |
-            org.opencontainers.image.title=zshmazon
+            org.opencontainers.image.title=${{ matrix.directories }}
             org.opencontainers.image.url=${{ github.repositoryUrl }}
             org.opencontainers.image.version=${{ steps.metadata.outputs.git_tag }}
             org.opencontainers.image.created=${{ steps.metadata.outputs.current_date }}
@@ -76,22 +68,11 @@ jobs:
       - name: Summary
         run: |
           {
-            echo -e "# Image: ${{ fromJson(steps.zshbuntu.outputs.metadata)['image.name'] }}\n"
+            echo -e "# Image: ${{ fromJson(steps.docker_image.outputs.metadata)['image.name'] }}\n"
             echo '<details>'
             echo '<summary>Details</summary>'
             echo -e '\n```'
-            echo -e "${{ steps.zshbuntu.outputs.metadata }}"
-            echo -e '```'
-            echo '</details>'
-            echo -e '\n'
-          } >> $GITHUB_STEP_SUMMARY
-          
-          {
-            echo -e "# Image: ${{ fromJson(steps.zshmazon.outputs.metadata)['image.name'] }}\n"
-            echo '<details>'
-            echo '<summary>Details</summary>'
-            echo -e '\n```'
-            echo -e "${{ steps.zshmazon.outputs.metadata }}"
+            echo -e "${{ steps.docker_image.outputs.metadata }}"
             echo -e '```'
             echo '</details>'
             echo -e '\n'
