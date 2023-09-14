@@ -1,0 +1,28 @@
+name: List Folders
+
+on:
+  workflow_call:
+    outputs:
+      directories:
+        description: "Json array of folders containing docker images"
+        value: ${{ jobs.prepare-folders.outputs.directories }}
+
+jobs:
+  prepare-folders:
+    runs-on: ubuntu-latest
+    name: Prepare folders
+    outputs:
+      directories: ${{ steps.list_folders.outputs.directories }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - id: list_folders
+        name: List folders
+        run: |
+          directory_quoted_and_comma=$(find . -type f \( -name Dockerfile -o -path 'docs/README.md' -o -path 'docs/short_description.txt' \) -exec dirname {} \; | sort -u | awk 'BEGIN { ORS = "," } { gsub(/^\.\//, ""); print "\"" $0 "\"" }' | sed 's/,$//' )
+          
+          echo "::notice title=directories::${directory_quoted_and_comma}"
+          echo "directories=[${directory_quoted_and_comma}]" >> "$GITHUB_OUTPUT"
