@@ -19,4 +19,4 @@ RUN set -ex; \
     # verify gh binary works
     gh --version;
 
-CMD ["gh"]
+ENTRYPOINT [ "gh" ]
