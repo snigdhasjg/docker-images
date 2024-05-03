@@ -5,7 +5,8 @@ RUN set -ex; \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
-        git; \
+        git \
+        jq; \
     rm -rf /var/lib/apt/lists/*
 
 ENV GITHUB_CLI_VERSION 2.48.0
