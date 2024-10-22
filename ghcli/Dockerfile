@@ -1,23 +1,13 @@
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
-RUN set -ex; \
-    apt-get update ; \
-    apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        git \
-        jq; \
+RUN apt update && \
+    apt-get install ca-certificates wget curl git jq -y --no-install-recommends && \
+	mkdir -p -m 755 /etc/apt/keyrings && \
+	wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null && \
+	chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+	echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+	apt update && \
+	apt install gh -y --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
-
-ENV GITHUB_CLI_VERSION 2.48.0
-
-RUN set -ex; \
-    curl -L "https://github.com/cli/cli/releases/download/v${GITHUB_CLI_VERSION}/gh_${GITHUB_CLI_VERSION}_checksums.txt" -o checksums.txt; \
-    curl -OL "https://github.com/cli/cli/releases/download/v${GITHUB_CLI_VERSION}/gh_${GITHUB_CLI_VERSION}_linux_amd64.deb"; \
-    shasum --ignore-missing -a 512 -c checksums.txt; \
-	dpkg -i "gh_${GITHUB_CLI_VERSION}_linux_amd64.deb"; \
-	rm -rf "gh_${GITHUB_CLI_VERSION}_linux_amd64.deb"; \
-    # verify gh binary works
-    gh --version;
 
 ENTRYPOINT [ "gh" ]
