@@ -60,7 +60,7 @@ jobs:
           no-cache: true
           push: true
           tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ matrix.directories }}:latest,${{ vars.DOCKERHUB_USERNAME }}/${{ matrix.directories }}:${{ steps.metadata.outputs.git_tag }}
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64 # ,linux/arm64/v8
           labels: |
             org.opencontainers.image.title=${{ matrix.directories }}
             org.opencontainers.image.url=${{ github.repositoryUrl }}
