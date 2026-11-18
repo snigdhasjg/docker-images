@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 Collection of Docker images, one folder per image. Each image is built and published to GHCR by a single workflow.
 
 ## Layout
@@ -14,11 +16,13 @@ Collection of Docker images, one folder per image. Each image is built and publi
 .github/workflows/build.yml
 ```
 
-Currently only `zshbuntu/` exists (Ubuntu + zsh, Oh-My-Zsh, powerlevel10k, plugins, passwordless-sudo `sandbox` user, uid 1001).
+Current images:
+- `zshbuntu/`: Ubuntu + zsh, Oh-My-Zsh, powerlevel10k, plugins, passwordless-sudo `sandbox` user, uid 1001.
+- `unbound/`: Ubuntu + Unbound DNS resolver; config in `unbound/unbound.conf` is copied to `/etc/unbound/unbound.conf.d/docker.conf`; runs as the package's non-root `unbound` user, exposes 53/udp+tcp.
 
 ## Adding an image
 
-Create `<name>/Dockerfile` (plus `docs/short_description.txt`, `docs/README.md`, `.dockerignore`). No workflow edits are needed: `build.yml` discovers every folder containing a `Dockerfile` and builds each in a matrix. The folder name becomes the image name.
+Create `<name>/Dockerfile` (plus `docs/short_description.txt`, `docs/README.md`, `.dockerignore`). No workflow edits are needed: `build.yml` discovers every folder containing a `Dockerfile` and builds each in a matrix. The folder name becomes the image name. Add an empty `.buildignore` file to a folder to exclude it from the build matrix.
 
 ## CI (`.github/workflows/build.yml`)
 
@@ -29,7 +33,7 @@ Create `<name>/Dockerfile` (plus `docs/short_description.txt`, `docs/README.md`,
 - Auth is `GITHUB_TOKEN` only (no Docker Hub, no repo secrets). Package visibility is set on GitHub after the first push (new packages start private).
 - Action versions are deliberately current (checkout v7, buildx/login v4, build-push v7, github-script v9); keep new steps consistent.
 
-## Dockerfile conventions (see `zshbuntu/Dockerfile`)
+## Dockerfile conventions (see `zshbuntu/Dockerfile`; `unbound/Dockerfile` follows the same apt/ARG pattern)
 
 - Base version is an `ARG` at the top (`UBUNTU_VERSION`), set to the latest LTS.
 - Single `apt-get` layer: `update`, `install -y --no-install-recommends`, `clean`, remove `/var/lib/apt/lists/*`; `DEBIAN_FRONTEND=noninteractive`.
@@ -43,6 +47,9 @@ Create `<name>/Dockerfile` (plus `docs/short_description.txt`, `docs/README.md`,
 ```sh
 docker build -t zshbuntu-test zshbuntu/
 docker run --rm zshbuntu-test zsh -c 'id; grep ^plugins ~/.zshrc'
+
+docker build -t unbound-test unbound/
+docker run --rm unbound-test unbound-checkconf
 ```
 
 Workflows cannot be run locally; validate YAML with `python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" .github/workflows/build.yml`.

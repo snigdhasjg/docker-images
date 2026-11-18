@@ -36,9 +36,10 @@ jobs:
           fetch-depth: 1
 
       - id: list_folders
-        name: List folders containing a Dockerfile
+        name: List folders containing a Dockerfile (skip those with .buildignore)
         run: |
           directories=$(find . -type f -name Dockerfile -not -path './.git/*' -printf '%h\n' \
+            | while read -r dir; do [ -e "$dir/.buildignore" ] || echo "$dir"; done \
             | sed 's|^\./||' | sort -u | jq -R . | jq -sc .)
           echo "::notice title=directories::${directories}"
           echo "directories=${directories}" >> "$GITHUB_OUTPUT"
