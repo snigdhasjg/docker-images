@@ -12,7 +12,7 @@ dig @127.0.0.1 -p 5353 example.com
 ```
 
 ## Configuration
-Default config is `/etc/unbound/unbound.conf.d/docker.conf` (port 53, loopback and RFC1918 clients, DNSSEC validation, outbound IPv6 off because Docker networks usually lack it; set `do-ip6: yes` if yours has it). Mount your own file over it to customise:
+Default config is `/etc/unbound/unbound.conf.d/docker.conf` (port 53, loopback, RFC1918, CGNAT (100.64.0.0/10) and link-local (169.254.0.0/16) clients, DNSSEC validation, outbound IPv6 off because Docker networks usually lack it; set `do-ip6: yes` if yours has it). Mount your own file over it to customise:
 ```shell
 docker run --rm -v ./my.conf:/etc/unbound/unbound.conf.d/docker.conf:ro ...
 ```
