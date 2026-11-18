@@ -1,0 +1,176 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/docs/**"
+      - "**.md"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**/docs/**"
+      - "**.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  prepare-folders:
+    name: Prepare folders
+    runs-on: ubuntu-slim
+    outputs:
+      directories: ${{ steps.list_folders.outputs.directories }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - id: list_folders
+        name: List folders containing a Dockerfile
+        run: |
+          directories=$(find . -type f -name Dockerfile -not -path './.git/*' -printf '%h\n' \
+            | sed 's|^\./||' | sort -u | jq -R . | jq -sc .)
+          echo "::notice title=directories::${directories}"
+          echo "directories=${directories}" >> "$GITHUB_OUTPUT"
+
+  version:
+    name: Version
+    runs-on: ubuntu-slim
+    outputs:
+      commit: ${{ steps.checkout.outputs.commit }}
+      tag: ${{ steps.semver.outputs.version_tag }}
+      version: ${{ steps.semver.outputs.version }}
+      previous_version: ${{ steps.semver.outputs.previous_version }}
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 100
+          fetch-tags: true
+          filter: blob:none
+
+      - uses: paulhatch/semantic-version@v6.0.4
+        id: semver
+        with:
+          tag_prefix: "v"
+          major_pattern: "/!:|BREAKING CHANGE:|MAJOR:/i"
+          minor_pattern: "/FEAT:|FEATURE:|MINOR:/i"
+          bump_each_commit: true
+
+  build:
+    name: Build ${{ matrix.directories }}
+    runs-on: ubuntu-26.04
+    needs:
+      - prepare-folders
+      - version
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        directories: ${{ fromJSON(needs.prepare-folders.outputs.directories) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          ref: ${{ needs.version.outputs.commit }}
+
+      - name: Determine image version
+        id: image_version
+        env:
+          EVENT: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          DIRECTORY: ${{ matrix.directories }}
+          VERSION: ${{ needs.version.outputs.version }}
+          PREVIOUS_VERSION: ${{ needs.version.outputs.previous_version }}
+          COMMIT: ${{ needs.version.outputs.commit }}
+        run: |
+          # GHCR requires lowercase image names
+          image="ghcr.io/${REPOSITORY,,}/${DIRECTORY,,}"
+          if [ "$EVENT" = "pull_request" ]; then
+            version="${PREVIOUS_VERSION}-${COMMIT:0:7}"
+            tags="${image}:${version}"
+          else
+            version="$VERSION"
+            tags="${image}:${VERSION}"$'\n'"${image}:latest"
+          fi
+          {
+            echo "description=$(cat "${DIRECTORY}/docs/short_description.txt" 2>/dev/null || true)"
+            echo "version=${version}"
+            echo "tags<<EOF"
+            echo "${tags}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Docker login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.directories }}/
+          platforms: linux/amd64,linux/arm64
+          provenance: false
+          sbom: true
+          pull: true
+          tags: ${{ steps.image_version.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.directories }}
+            org.opencontainers.image.description=${{ steps.image_version.outputs.description }}
+            org.opencontainers.image.licenses=MPL-2.0
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.image_version.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.version.outputs.commit }}
+            com.snigji.ci.id=${{ github.run_number }}
+            com.snigji.ci.url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          push: ${{ github.event_name != 'pull_request' }}
+
+  tag:
+    name: Create tag
+    if: github.event_name == 'push'
+    runs-on: ubuntu-slim
+    needs:
+      - version
+      - build
+    permissions:
+      contents: write
+    steps:
+      - name: Create tag
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ needs.version.outputs.tag }}',
+              sha: '${{ needs.version.outputs.commit }}'
+            })
