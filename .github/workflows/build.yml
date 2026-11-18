@@ -95,28 +95,43 @@ jobs:
         id: image_version
         env:
           EVENT: ${{ github.event_name }}
-          REPOSITORY: ${{ github.repository }}
           DIRECTORY: ${{ matrix.directories }}
           VERSION: ${{ needs.version.outputs.version }}
           PREVIOUS_VERSION: ${{ needs.version.outputs.previous_version }}
           COMMIT: ${{ needs.version.outputs.commit }}
         run: |
-          # GHCR requires lowercase image names
-          image="ghcr.io/${REPOSITORY,,}/${DIRECTORY,,}"
           if [ "$EVENT" = "pull_request" ]; then
             version="${PREVIOUS_VERSION}-${COMMIT:0:7}"
-            tags="${image}:${version}"
           else
             version="$VERSION"
-            tags="${image}:${VERSION}"$'\n'"${image}:latest"
           fi
           {
-            echo "description=$(cat "${DIRECTORY}/docs/short_description.txt" 2>/dev/null || true)"
             echo "version=${version}"
-            echo "tags<<EOF"
-            echo "${tags}"
-            echo "EOF"
+            echo "description=$(cat "${DIRECTORY}/docs/short_description.txt" 2>/dev/null || true)"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        env:
+          # GHCR reads the description etc. from the index manifest of multi-arch images
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.directories }}
+          tags: |
+            type=raw,value=${{ steps.image_version.outputs.version }}
+            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.directories }}
+            org.opencontainers.image.description=${{ steps.image_version.outputs.description }}
+            org.opencontainers.image.licenses=MPL-2.0
+            org.opencontainers.image.documentation=${{ github.server_url }}/${{ github.repository }}/blob/${{ needs.version.outputs.commit }}/${{ matrix.directories }}/docs/README.md
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.image_version.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.version.outputs.commit }}
+            com.snigji.ci.id=${{ github.run_number }}
+            com.snigji.ci.url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -141,17 +156,9 @@ jobs:
           provenance: false
           sbom: true
           pull: true
-          tags: ${{ steps.image_version.outputs.tags }}
-          labels: |
-            org.opencontainers.image.title=${{ matrix.directories }}
-            org.opencontainers.image.description=${{ steps.image_version.outputs.description }}
-            org.opencontainers.image.licenses=MPL-2.0
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.image_version.outputs.version }}
-            org.opencontainers.image.revision=${{ needs.version.outputs.commit }}
-            com.snigji.ci.id=${{ github.run_number }}
-            com.snigji.ci.url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           push: ${{ github.event_name != 'pull_request' }}
 
   tag:

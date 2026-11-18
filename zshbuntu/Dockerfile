@@ -4,8 +4,10 @@ FROM ubuntu:${UBUNTU_VERSION}
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-        ca-certificates zsh sudo systemd vim iputils-ping curl git tig && \
+        ca-certificates zsh sudo systemd vim git tig \
+        curl iputils-ping net-tools iproute2 dnsutils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

@@ -16,7 +16,7 @@ Whether you're a developer, system administrator, or terminal enthusiast, ZSHbun
 - [Zsh Docker Aliases](https://github.com/akarzim/zsh-docker-aliases) for streamlined container management.
 
 ## Modules Installed
-zsh, sudo, systemd, vim, iputils-ping, curl, git, tig
+zsh, sudo, systemd, vim, git, tig, ca-certificates, curl, iputils-ping, net-tools, iproute2, dnsutils
 
 ## How to Use ZSHbuntu
 
